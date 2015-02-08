@@ -25,7 +25,15 @@ function mysql_export_export_access() {
 }
 
 function mysql_export_export() {
-  global $databases;
+  global $db_url;
+
+  $databases = $db_url;
+
+  if (!is_array($databases)) {
+    $databases = array(
+      'default' => $databases,
+    );
+  }
 
   $connection = 'default';
 
@@ -38,9 +46,7 @@ function mysql_export_export() {
     drupal_exit();
   }
 
-  $database = $databases[$connection]['default'];
-
-  $filename = file_directory_temp() . '/' . $connection . '.sql';
+  $database = parse_url($databases[$connection]);
 
   $hostname = $database['host'];
 
@@ -50,7 +56,9 @@ function mysql_export_export() {
 
   module_load_include('php', 'mysql_export', 'mysqldump-factory/lib/MysqlDumpFactory');
 
-  $mc = MysqlDumpFactory::makeMysqlDump($hostname, $database['username'], $database['password'], $database['database'], class_exists('PDO'));
+  $mc = MysqlDumpFactory::makeMysqlDump($hostname, $database['user'], $database['pass'], ltrim($database['path'], '/'), class_exists('PDO'));
+
+  $filename = file_directory_temp() . '/' . $connection . '.sql';
 
   $mc->setFileName($filename);
   $mc->export();
