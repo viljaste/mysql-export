@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function mysql_export_menu() {
+  $items = array();
+
+  $items['mysql-export/export'] = array(
+    'title' => 'Export MySQL dump',
+    'page callback' => 'mysql_export_export',
+    'access callback' => 'mysql_export_export_access',
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+function mysql_export_export_access() {
+  if ($_GET['drupal_private_key'] == drupal_get_private_key()) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+function mysql_export_export() {
+  global $databases;
+
+  $connection = 'default';
+
+  if (isset($_GET['connection'])) {
+    $connection = $_GET['connection'];
+  }
+
+  if (!isset($databases[$connection])) {
+    drupal_not_found();
+    drupal_exit();
+  }
+
+  $database = $databases[$connection]['default'];
+
+  $filename = file_directory_temp() . '/' . $connection . '.sql';
+
+  $hostname = $database['host'];
+
+  if ($database['port']) {
+    $hostname .= ':' . $database['port'];
+  }
+
+  module_load_include('php', 'mysql_export', 'mysqldump-factory/lib/MysqlDumpFactory');
+
+  $mc = MysqlDumpFactory::makeMysqlDump($hostname, $database['username'], $database['password'], $database['database'], class_exists('PDO'));
+
+  $mc->setFileName($filename);
+  $mc->export();
+
+  header('Content-Description: File Transfer');
+  header('Content-Type: application/octet-stream');
+  header('Content-Disposition: attachment; filename=' . basename($filename));
+  header('Content-Transfer-Encoding: binary');
+  header('Expires: 0');
+  header('Cache-Control: must-revalidate');
+  header('Pragma: public');
+  header('Content-Length: ' . filesize($filename));
+
+  ob_clean();
+  flush();
+
+  readfile($filename);
+
+  unlink($filename);
+
+  drupal_exit();
+}
