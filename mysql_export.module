@@ -9,26 +9,48 @@ function mysql_export_menu() {
   $items['mysql-export/export'] = array(
     'title' => 'Export MySQL dump',
     'page callback' => 'mysql_export_export',
-    'access callback' => 'mysql_export_export_access'
+    'access callback' => 'mysql_export_export_access',
+    'type' => MENU_CALLBACK
   );
 
   return $items;
 }
 
 function mysql_export_export_access() {
-  global $conf;
+  if ($_GET['drupal_private_key'] == drupal_get_private_key()) {
+    return TRUE;
+  }
 
   return FALSE;
 }
 
 function mysql_export_export() {
-  global $conf;
+  global $databases;
 
-  $filename = file_directory_temp() . '/dump.sql';
+  $connection = 'default';
 
-  include_once 'mysqldump-factory-2.2.0/lib/MysqlDumpFactory.php';
+  if (isset($_GET['connection'])) {
+    $connection = $_GET['connection'];
+  }
 
-  $mc = MysqlDumpFactory::makeMysqlDump('localhost', 'root', 'root', 'drupal', class_exists('PDO'));
+  if (!isset($databases[$connection])) {
+    drupal_not_found();
+    drupal_exit();
+  }
+
+  $database = $databases[$connection]['default'];
+
+  $filename = file_directory_temp() . '/' . $connection . '.sql';
+
+  $hostname = $database['host'];
+
+  if ($database['port']) {
+    $hostname .= ':' . $database['port'];
+  }
+
+  module_load_include('php', 'mysql_export', 'mysqldump-factory/lib/MysqlDumpFactory');
+
+  $mc = MysqlDumpFactory::makeMysqlDump($hostname, $database['username'], $database['password'], $database['database'], class_exists('PDO'));
 
   $mc->setFileName($filename);
   $mc->export();
