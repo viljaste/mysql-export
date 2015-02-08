@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function mysql_export_menu() {
+  $items = array();
+
+  $items['mysql-export/export'] = array(
+
+  );
+
+  return $items;
+}
+
+function mysql_export_export() {
+  global $conf;
+
+  $filename = file_directory_temp() . '/dump.sql';
+
+  include_once 'mysqldump-factory-2.2.0/lib/MysqlDumpFactory.php';
+
+  $mc = MysqlDumpFactory::makeMysqlDump('localhost', 'root', 'root', 'drupal', class_exists('PDO'));
+
+  $mc->setFileName($filename);
+  $mc->export();
+
+  header('Content-Description: File Transfer');
+  header('Content-Type: application/octet-stream');
+  header('Content-Disposition: attachment; filename=' . basename($filename));
+  header('Content-Transfer-Encoding: binary');
+  header('Expires: 0');
+  header('Cache-Control: must-revalidate');
+  header('Pragma: public');
+  header('Content-Length: ' . filesize($filename));
+
+  ob_clean();
+  flush();
+
+  readfile($filename);
+
+  exit();
+}
