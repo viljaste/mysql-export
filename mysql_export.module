@@ -69,5 +69,7 @@ function mysql_export_export() {
 
   readfile($filename);
 
+  unlink($filename);
+
   drupal_exit();
 }
