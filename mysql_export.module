@@ -7,10 +7,18 @@ function mysql_export_menu() {
   $items = array();
 
   $items['mysql-export/export'] = array(
-
+    'title' => 'Export MySQL dump',
+    'page callback' => 'mysql_export_export',
+    'access callback' => 'mysql_export_export_access'
   );
 
   return $items;
+}
+
+function mysql_export_export_access() {
+  global $conf;
+
+  return FALSE;
 }
 
 function mysql_export_export() {
