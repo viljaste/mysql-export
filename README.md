@@ -1,6 +1,6 @@
 # mysql-export
 
-A module for Drupal 6 (branch 6.x) and 7 (branch 7.x) that allows you to download MySQL database dump over HTTP.
+A module for Drupal 6 (branch `6.x`) and 7 (branch `7.x`) that allows you to download MySQL database dump over HTTP.
 
 ## Usage
 
